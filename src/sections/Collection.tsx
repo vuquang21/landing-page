@@ -82,7 +82,7 @@ export default function Collection() {
 
                   <button
                     aria-label="View NFT"
-                    className="w-12 h-12 rounded-full bg-gradient-to-br from-[#b724ff] to-[#7c3aed] shadow-lg shadow-purple-500/50 hover:scale-110 transition-transform flex items-center justify-center"
+                    className="liquid-btn w-12 h-12"
                   >
                     <svg
                       width="16"

@@ -213,6 +213,142 @@ html.lenis body {
    reliably drop frames on scroll. The animated gradients above give a similar
    "moving liquid light" read for free. */
 
+/* ---- Liquid-glass icon button ----
+   Circular glass pill used for card CTAs (e.g. the rarity-card arrow). Built
+   from one element + two pseudo-layers:
+     ::before → static upper specular highlight (crescent of light at the top)
+     ::after  → animated shimmer band that drifts diagonally ("liquid" motion)
+   The button's direct children (icons) are forced above both layers.
+   Only `transform`, `opacity`, `background-position`, `filter`, and
+   `box-shadow` animate — all compositor-friendly.  */
+.liquid-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+  color: #eff4ff;
+  isolation: isolate;              /* scopes child z-index, prevents leaks  */
+  overflow: hidden;                /* clips shimmer band to the circle      */
+  transform: translateZ(0);        /* dedicated compositor layer            */
+  will-change: transform;
+
+  /* Glass body: pale specular at top-left + cool→purple refraction tint.
+     Kept subtle so the gradient reads as "light inside glass", not as paint. */
+  background:
+    radial-gradient(120% 120% at 30% 20%, rgba(255, 255, 255, 0.28), transparent 55%),
+    linear-gradient(
+      135deg,
+      rgba(160, 200, 255, 0.20) 0%,
+      rgba(183, 36, 255, 0.22) 55%,
+      rgba(124, 58, 237, 0.28) 100%
+    );
+  /* A small extra blur on top of the parent's glass — gives the button its
+     own depth without stacking an expensive large-radius filter. */
+  backdrop-filter: blur(8px) saturate(160%);
+  -webkit-backdrop-filter: blur(8px) saturate(160%);
+
+  /* Edge + ambient lighting: top white rim, bottom purple rim, crisp hairline,
+     soft outer purple bloom. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -1px 0 rgba(183, 36, 255, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 6px 18px rgba(124, 58, 237, 0.28),
+    0 0 14px rgba(183, 36, 255, 0.22);
+
+  transition:
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 300ms ease-out,
+    filter 300ms ease-out;
+}
+
+/* Static specular crescent — sits above the glass body but below the icon.
+   Makes the button read as a convex surface catching light from above. */
+.liquid-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    80% 50% at 50% 0%,
+    rgba(255, 255, 255, 0.45),
+    rgba(255, 255, 255, 0) 70%
+  );
+  opacity: 0.85;
+  transition: opacity 300ms ease-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Liquid shimmer — a diagonal bright band that sweeps across forever.
+   Animated via `background-position` (compositor-only). `mix-blend-mode:
+   screen` makes it read as additive light on the glass, not opaque paint.
+   `inset: -20%` lets the band enter and exit beyond the clipped edge so the
+   motion feels continuous rather than starting flush at the border. */
+.liquid-btn::after {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  border-radius: inherit;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.35) 48%,
+    rgba(183, 36, 255, 0.28) 55%,
+    transparent 72%
+  );
+  background-size: 220% 100%;
+  background-position: 120% 0;
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  animation: liquid-btn-shimmer 4.5s linear infinite;
+  transition: opacity 300ms ease-out;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Ensure icon/content sits above both pseudo-layers. */
+.liquid-btn > * {
+  position: relative;
+  z-index: 3;
+}
+
+.liquid-btn:hover {
+  transform: translateZ(0) scale(1.08);
+  /* Brighten every edge + boost both glows on hover. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.50),
+    inset 0 -1px 0 rgba(183, 36, 255, 0.30),
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 10px 26px rgba(124, 58, 237, 0.45),
+    0 0 22px rgba(183, 36, 255, 0.40);
+  filter: brightness(1.12);
+}
+
+.liquid-btn:hover::before { opacity: 1; }
+.liquid-btn:hover::after  { opacity: 0.85; }
+
+.liquid-btn:active {
+  /* Snap back faster than the ease-out hover so the click feels tactile. */
+  transform: translateZ(0) scale(0.95);
+  transition-duration: 120ms;
+  filter: brightness(1.02);
+}
+
+.liquid-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+@keyframes liquid-btn-shimmer {
+  0%   { background-position: 120% 0; }
+  100% { background-position: -120% 0; }
+}
+
 /* Respect motion preferences. */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -223,9 +359,10 @@ html.lenis body {
     transition-duration: 0.01ms !important;
   }
 
-  /* Belt-and-braces: explicitly kill the sheen loop for reduced-motion users. */
+  /* Belt-and-braces: explicitly kill looping animations for reduced-motion users. */
   .nav-link:hover::after,
-  .nav-link:focus-visible::after {
+  .nav-link:focus-visible::after,
+  .liquid-btn::after {
     animation: none;
   }
 }
