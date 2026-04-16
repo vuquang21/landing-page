@@ -1,0 +1,115 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Lenis replaces CSS scroll-behavior. Keep body free of scroll-behavior so
+   native touch momentum (on mobile, where we skip Lenis) isn't overridden. */
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  background: #010828;
+  color: #eff4ff;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeSpeed;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Lenis recommends this to avoid overscroll jumps. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ---- Section isolation ----
+   Each <section> gets its own layout/paint island so repaints inside one
+   section never cascade into others. */
+.section-contain {
+  contain: layout paint style;
+  isolation: isolate;
+}
+
+/* ---- Liquid glass ----
+   Kept visually identical. Added `isolation: isolate` so the ::before gradient
+   mask can't force upstream compositing passes. */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.01);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  /* Promote to own layer so the blur doesn't re-run on every scroll tick. */
+  transform: translateZ(0);
+}
+
+.liquid-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0) 60%,
+    rgba(255, 255, 255, 0.15) 80%,
+    rgba(255, 255, 255, 0.45) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ---- Texture overlay ----
+   mix-blend-mode over a fixed full-viewport layer is the single most expensive
+   thing on this page. We keep the effect but:
+     1. Force it onto its own GPU layer (translateZ + will-change).
+     2. Give it `contain: strict` so it participates in no layout calcs.
+     3. Drop to a cheaper `opacity` during active scroll (see useSmoothScroll). */
+.texture-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background-image: url('/texture.png');
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: lighten;
+  opacity: 0.6;
+  will-change: opacity;
+  transform: translateZ(0);
+  contain: strict;
+}
+
+/* Respect motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
