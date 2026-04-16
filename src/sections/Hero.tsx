@@ -38,13 +38,13 @@ export default function Hero() {
             Orbis.Nft
           </div>
 
-          <nav className="hidden lg:block liquid-glass rounded-[28px] px-[52px] py-[24px]">
-            <ul className="flex items-center gap-10">
+          <nav className="hidden lg:block liquid-glass rounded-[28px] px-4 py-2">
+            <ul className="flex items-center gap-1">
               {NAV_LINKS.map((link) => (
                 <li key={link}>
                   <a
                     href="#"
-                    className="font-grotesk text-[13px] uppercase tracking-wider text-cream hover:text-neon transition-colors"
+                    className="nav-link font-grotesk text-[13px] uppercase tracking-wider"
                   >
                     {link}
                   </a>
